@@ -13,6 +13,7 @@ func main() {
 	for i := range input {
 		start(input[i])
 	}
+	select {}
 }
 
 func start(configFile string) {
@@ -24,9 +25,7 @@ func start(configFile string) {
 
 	var f interface{}
 	err = json.Unmarshal(configs, &f)
-	if err != nil {
-		fmt.Println(err)
-	}
+	if err != nil {fmt.Println(err)}
 	m := f.(map[string]interface{})
 	for _, v := range m {
 		if value, ok := v.(map[string]interface {}); ok {
@@ -39,7 +38,7 @@ func args() ([]string) {
 	ret := []string{}
 	if len(os.Args) <= 1 {
 		ret = append(ret, "gpr.json")
-	}                else {
+	} else {
 		for i := 1; i < len(os.Args); i++ {
 			ret = append(ret, os.Args[i])
 		}

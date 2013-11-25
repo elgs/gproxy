@@ -1,11 +1,13 @@
 package gprkernel
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+)
 
 type Config struct {
 	host string
 	port float64
-	routes map[string]interface {}
 }
 
 func Run(config *map[string] interface {}) {
@@ -32,7 +34,7 @@ func Run(config *map[string] interface {}) {
 				routes[host] = rConfig
 			}
 		}
-		Router(&lConfig, &routes)
+		go Router(&lConfig, &routes)
 	} else {
 		rConfig := Config{}
 		if v, ok := (*config)["dstAddr"].(string); ok {
@@ -41,14 +43,35 @@ func Run(config *map[string] interface {}) {
 		if v, ok := (*config)["dstPort"].(float64); ok {
 			rConfig.port = v
 		}
-		Proxy(&lConfig, &rConfig)
+		go Proxy(&lConfig, &rConfig)
 	}
 }
 
 func Proxy(lConfig *Config, rConfig *Config) {
-	fmt.Println("In Proxy")
+	addressLocal := fmt.Sprint(*lConfig.host , ":" , *lConfig.port)
+	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
+	if err != nil {fmt.Println(err)}
+
+	listener, err := net.ListenTCP("tcp", tcpAddrLocal)
+	if err != nil {fmt.Println(err)}
+
+	addressDst := fmt.Sprint(*rConfig.host , ":" , *rConfig.port)
+	tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
+	if err != nil {fmt.Println(err)}
+
+	for {
+		connLocal, err := listener.Accept()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		go func(connLocal *net.Conn) {
+			connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
+			if err != nil {fmt.Println(err)}
+			fmt.Println(connDst)
+		}(connLocal)
+	}
 }
 
 func Router(lConfig *Config, routes *map[string]Config) {
-	fmt.Println("In Router")
 }
