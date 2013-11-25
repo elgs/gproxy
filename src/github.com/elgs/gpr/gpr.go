@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"github.com/elgs/gprkernel"
 	"os"
+	"runtime"
 )
 
 func main() {
+	runtime.GOMAXPROCS(4)
 	input := args()
 	for i := range input {
 		start(input[i])
