@@ -13,11 +13,9 @@ func main() {
 	for i := range input {
 		start(input[i])
 	}
-
 }
 
 func start(configFile string) {
-	fmt.Println(configFile)
 	configs, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		fmt.Println(err)
