@@ -24,7 +24,7 @@ func main() {
 func start(configFile string) {
 	configs, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Println(configFile, "not found")
+		fmt.Println(configFile, " not found")
 		return
 	}
 
