@@ -3,6 +3,7 @@ package gprkernel
 import (
 	"fmt"
 	"net"
+	"runtime"
 )
 
 type Config struct {
@@ -86,6 +87,7 @@ func Proxy(lConfig *Config, rConfig *Config) {
 			go func() {
 				var buffer = make([]byte, 4096)
 				for {
+					runtime.Gosched()
 					n, err := connLocal.Read(buffer)
 					if err != nil {
 						fmt.Println(err)
@@ -103,6 +105,7 @@ func Proxy(lConfig *Config, rConfig *Config) {
 
 			var buffer = make([]byte, 4096)
 			for {
+				runtime.Gosched()
 				n, err := connDst.Read(buffer)
 				if err != nil {
 					fmt.Println(err)

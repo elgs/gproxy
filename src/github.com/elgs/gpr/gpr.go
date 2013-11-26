@@ -7,6 +7,7 @@ import (
 	"github.com/elgs/gprkernel"
 	"os"
 	"runtime"
+	"time"
 )
 
 func main() {
@@ -15,7 +16,9 @@ func main() {
 	for i := range input {
 		start(input[i])
 	}
-	for {}
+	for {
+		time.Sleep(time.Hour)
+	}
 }
 
 func start(configFile string) {
