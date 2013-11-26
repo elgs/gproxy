@@ -50,14 +50,23 @@ func Run(config *map[string] interface {}) {
 func Proxy(lConfig *Config, rConfig *Config) {
 	addressLocal := fmt.Sprint(lConfig.host , ":" , lConfig.port)
 	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
-	if err != nil {fmt.Println(err)}
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	listener, err := net.ListenTCP("tcp", tcpAddrLocal)
-	if err != nil {fmt.Println(err)}
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
 	tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
-	if err != nil {fmt.Println(err)}
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	for {
 		connLocal, err := listener.Accept()
@@ -65,45 +74,50 @@ func Proxy(lConfig *Config, rConfig *Config) {
 			fmt.Println(err)
 			continue
 		}
-		connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
-		if err != nil {fmt.Println(err)}
-		localChan := make(chan []byte, 10)
-		dstChan := make(chan []byte, 10)
-		go func() {
-			for {
-				select {
-				case localChan <- func() ([]byte) {
-					var buffer = make([]byte, 1024)
-					n, err := connLocal.Read(buffer[0:])
-					if err != nil {fmt.Println(err)}
-					fmt.Println(1, n, string(buffer[0:n]))
-					return buffer[0:n]
-				}():
-				case dstChan <- func() ([]byte) {
-					var buffer = make([]byte, 1024)
-					n, err := connDst.Read(buffer[0:])
-					if err != nil {fmt.Println(err)}
-					fmt.Println(2, n, string(buffer[0:n]))
-					return buffer[0:n]
-				}():
-				}
-			}
-		}()
 
 		go func() {
+			connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
+			defer connDst.Close();
+			defer connLocal.Close()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			go func() {
+				var buffer = make([]byte, 4096)
+				for {
+					n, err := connLocal.Read(buffer)
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
+					if n > 0 {
+						_, err := connDst.Write(buffer[0:n])
+						if err != nil {
+							fmt.Println(err)
+							break
+						}
+					}
+				}
+			}()
+
+			var buffer = make([]byte, 4096)
 			for {
-				select {
-				case buffer := <-localChan:
-					fmt.Println(3, string(buffer))
-					connDst.Write(buffer)
-				case buffer := <-dstChan:
-					fmt.Println(4, string(buffer))
-					connLocal.Write(buffer)
+				n, err := connDst.Read(buffer)
+				if err != nil {
+					fmt.Println(err)
+					break
+				}
+				if n > 0 {
+					_, err := connLocal.Write(buffer[0:n])
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
 				}
 			}
 		}()
 	}
-
 }
 
 func Router(lConfig *Config, routes *map[string]Config) {

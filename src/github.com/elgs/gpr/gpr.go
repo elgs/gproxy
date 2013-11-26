@@ -15,7 +15,7 @@ func main() {
 	for i := range input {
 		start(input[i])
 	}
-	select {}
+	for {}
 }
 
 func start(configFile string) {
