@@ -160,8 +160,64 @@ func Router(lConfig *Config, routes *map[string]Config) {
 				if strings.HasPrefix(strings.ToLower(header), "host") {
 					hostData := strings.Split(header, ":")
 					route := strings.TrimSpace(hostData[1])
-					rConfig := (*routes)[route]
-					fmt.Println(rConfig)
+					rConfig, ok := (*routes)[route]
+					if !ok {
+						rConfig, ok = (*routes)["default"]
+						if !ok {
+							fmt.Println("No route found.")
+							break;
+						}
+					}
+					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
+					fmt.Println(addressDst)
+					tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
+					defer connDst.Close()
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+
+					go func() {
+						var buffer = make([]byte, 4096)
+						for {
+							runtime.Gosched()
+							n, err := connLocal.Read(buffer)
+							if err != nil {
+								fmt.Println(err)
+								break
+							}
+							if n > 0 {
+								_, err := connDst.Write(buffer[0:n])
+								if err != nil {
+									fmt.Println(err)
+									break
+								}
+							}
+						}
+					}()
+
+					var buffer = make([]byte, 4096)
+					for {
+						runtime.Gosched()
+						n, err := connDst.Read(buffer)
+						if err != nil {
+							fmt.Println(err)
+							break
+						}
+						if n > 0 {
+							_, err := connLocal.Write(buffer[0:n])
+							if err != nil {
+								fmt.Println(err)
+								break
+							}
+						}
+					}
+					break;
 				}
 			}
 		}()
