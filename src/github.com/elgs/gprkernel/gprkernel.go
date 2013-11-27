@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"runtime"
+	"strings"
 )
 
 type Config struct {
@@ -78,7 +79,7 @@ func Proxy(lConfig *Config, rConfig *Config) {
 
 		go func() {
 			connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
-			defer connDst.Close();
+			defer connDst.Close()
 			defer connLocal.Close()
 			if err != nil {
 				fmt.Println(err)
@@ -124,4 +125,45 @@ func Proxy(lConfig *Config, rConfig *Config) {
 }
 
 func Router(lConfig *Config, routes *map[string]Config) {
+	addressLocal := fmt.Sprint(lConfig.host , ":" , lConfig.port)
+	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	listener, err := net.ListenTCP("tcp", tcpAddrLocal)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for {
+		connLocal, err := listener.Accept()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		go func() {
+			defer connLocal.Close()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			var buffer = make([]byte, 4096)
+			n, err := connLocal.Read(buffer)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			headers := strings.Split(string(buffer[0:n]), "\n")
+			for _, header := range headers {
+				if strings.HasPrefix(strings.ToLower(header), "host") {
+					hostData := strings.Split(header, ":")
+					route := strings.TrimSpace(hostData[1])
+					rConfig := (*routes)[route]
+					fmt.Println(rConfig)
+				}
+			}
+		}()
+	}
 }
