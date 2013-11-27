@@ -50,3 +50,50 @@ func args() ([]string) {
 	}
 	return ret
 }
+
+func test() {
+	configProxy1 := `{
+		"dstPort": 80,
+		"localPort": 3000,
+		"dstAddr": "www.microsoft.com"
+	}`
+
+	configProxy2 := `{
+		"dstPort": 80,
+		"localPort": 2000,
+		"dstAddr": "www.google.com"
+	}`
+
+	configRouter := `{
+		"localPort": 8000,
+		"routes": {
+			"hosta": {
+				"dstAddr": "127.0.0.1",
+				"dstPort": 10309
+			},
+			"default": {
+				"dstAddr": "127.0.0.1",
+				"dstPort": 10310
+			}
+		}
+	}`
+
+	var f1 interface{}
+	json.Unmarshal([]byte(configProxy1), &f1)
+	m1 := f1.(map[string]interface{})
+	gprkernel.Run(&m1)
+
+	var f2 interface{}
+	json.Unmarshal([]byte(configProxy2), &f2)
+	m2 := f2.(map[string]interface{})
+	gprkernel.Run(&m2)
+
+	var f3 interface{}
+	json.Unmarshal([]byte(configRouter), &f3)
+	m3 := f3.(map[string]interface{})
+	gprkernel.Run(&m3)
+
+	for {
+		time.Sleep(time.Hour)
+	}
+}
