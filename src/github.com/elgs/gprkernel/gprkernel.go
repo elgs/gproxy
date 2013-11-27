@@ -149,13 +149,13 @@ func Router(lConfig *Config, routes *map[string]Config) {
 				fmt.Println(err)
 				return
 			}
-			var buffer = make([]byte, 4096)
-			n, err := connLocal.Read(buffer)
+			var peep = make([]byte, 4096)
+			n, err := connLocal.Read(peep)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			headers := strings.Split(string(buffer[0:n]), "\n")
+			headers := strings.Split(string(peep[0:n]), "\n")
 			for _, header := range headers {
 				if strings.HasPrefix(strings.ToLower(header), "host") {
 					hostData := strings.Split(header, ":")
@@ -169,7 +169,6 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						}
 					}
 					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
-					fmt.Println(addressDst)
 					tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
 					if err != nil {
 						fmt.Println(err)
@@ -181,7 +180,11 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						fmt.Println(err)
 						return
 					}
-
+					_, err = connDst.Write(peep[0:n])
+					if err != nil {
+						fmt.Println(err)
+						break;
+					}
 					go func() {
 						var buffer = make([]byte, 4096)
 						for {
