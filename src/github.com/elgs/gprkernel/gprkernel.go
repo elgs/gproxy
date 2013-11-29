@@ -102,6 +102,8 @@ func Proxy(lConfig *Config, rConfig *Config) {
 						}
 					}
 				}
+				connDst.Close()
+				connLocal.Close()
 			}()
 
 			var buffer = make([]byte, 4096)
@@ -120,6 +122,8 @@ func Proxy(lConfig *Config, rConfig *Config) {
 					}
 				}
 			}
+			connDst.Close()
+			connLocal.Close()
 		}()
 	}
 }
@@ -202,6 +206,8 @@ func Router(lConfig *Config, routes *map[string]Config) {
 								}
 							}
 						}
+						connDst.Close()
+						connLocal.Close()
 					}()
 
 					var buffer = make([]byte, 4096)
@@ -220,6 +226,8 @@ func Router(lConfig *Config, routes *map[string]Config) {
 							}
 						}
 					}
+					connDst.Close()
+					connLocal.Close()
 					break;
 				}
 			}
