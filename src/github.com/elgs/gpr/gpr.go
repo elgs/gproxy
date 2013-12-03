@@ -11,7 +11,12 @@ import (
 )
 
 func main() {
-	runtime.GOMAXPROCS(4)
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	input := args()
 	for i := range input {
 		start(input[i])
