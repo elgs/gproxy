@@ -24,13 +24,14 @@ func main() {
 func start(configFile string) {
 	configs, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Println(configFile, " not found")
-		return
+		panic(fmt.Sprint(configFile, " not found"))
 	}
 
 	var f interface{}
 	err = json.Unmarshal(configs, &f)
-	if err != nil {fmt.Println(err)}
+	if err != nil {
+		panic(err)
+	}
 	m := f.(map[string]interface{})
 	for _, v := range m {
 		if value, ok := v.(map[string]interface {}); ok {

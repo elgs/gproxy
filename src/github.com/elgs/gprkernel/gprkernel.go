@@ -50,24 +50,26 @@ func Run(config *map[string] interface {}) {
 }
 
 func Proxy(lConfig *Config, rConfig *Config) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	addressLocal := fmt.Sprint(lConfig.host , ":" , lConfig.port)
 	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	listener, err := net.ListenTCP("tcp", tcpAddrLocal)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
 	tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	for {
@@ -79,31 +81,42 @@ func Proxy(lConfig *Config, rConfig *Config) {
 
 		go func() {
 			connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
-			defer connDst.Close()
-			defer connLocal.Close()
+			defer func() {
+				connDst.Close()
+				fmt.Println("Server connection closed.")
+				connLocal.Close()
+				fmt.Println("Client connection closed.")
+				if err := recover(); err != nil {
+					fmt.Println(err)
+				}
+			}()
 			if err != nil {
-				fmt.Println(err)
-				return
+				panic(err)
 			}
 			go func() {
+				defer func() {
+					connDst.Close()
+					fmt.Println("Server connection closed.")
+					connLocal.Close()
+					fmt.Println("Client connection closed.")
+					if err := recover(); err != nil {
+						fmt.Println(err)
+					}
+				}()
 				var buffer = make([]byte, 4096)
 				for {
 					runtime.Gosched()
 					n, err := connLocal.Read(buffer)
 					if err != nil {
-						fmt.Println(err)
-						break
+						panic(err)
 					}
 					if n > 0 {
 						_, err := connDst.Write(buffer[0:n])
 						if err != nil {
-							fmt.Println(err)
-							break
+							panic(err)
 						}
 					}
 				}
-				connDst.Close()
-				connLocal.Close()
 			}()
 
 			var buffer = make([]byte, 4096)
@@ -111,35 +124,34 @@ func Proxy(lConfig *Config, rConfig *Config) {
 				runtime.Gosched()
 				n, err := connDst.Read(buffer)
 				if err != nil {
-					fmt.Println(err)
-					break
+					panic(err)
 				}
 				if n > 0 {
 					_, err := connLocal.Write(buffer[0:n])
 					if err != nil {
-						fmt.Println(err)
-						break
+						panic(err)
 					}
 				}
 			}
-			connDst.Close()
-			connLocal.Close()
 		}()
 	}
 }
 
 func Router(lConfig *Config, routes *map[string]Config) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	addressLocal := fmt.Sprint(lConfig.host , ":" , lConfig.port)
 	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	listener, err := net.ListenTCP("tcp", tcpAddrLocal)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 	for {
 		connLocal, err := listener.Accept()
@@ -148,16 +160,17 @@ func Router(lConfig *Config, routes *map[string]Config) {
 			continue
 		}
 		go func() {
-			defer connLocal.Close()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			defer func() {
+				connLocal.Close()
+				fmt.Println("Client connection closed.")
+				if err := recover(); err != nil {
+					fmt.Println(err)
+				}
+			}()
 			var peep = make([]byte, 4096)
 			n, err := connLocal.Read(peep)
 			if err != nil {
-				fmt.Println(err)
-				return
+				panic(err)
 			}
 			headers := strings.Split(string(peep[0:n]), "\n")
 			for _, header := range headers {
@@ -168,46 +181,53 @@ func Router(lConfig *Config, routes *map[string]Config) {
 					if !ok {
 						rConfig, ok = (*routes)["default"]
 						if !ok {
-							fmt.Println("No route found.")
-							break;
+							panic("No route found.")
 						}
 					}
 					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
 					tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
 					if err != nil {
-						fmt.Println(err)
-						return
+						panic(err)
 					}
 					connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
-					defer connDst.Close()
+					defer func() {
+						connDst.Close()
+						fmt.Println("Server connection closed.")
+						if err := recover(); err != nil {
+							fmt.Println(err)
+						}
+					}()
 					if err != nil {
-						fmt.Println(err)
-						return
+						panic(err)
 					}
 					_, err = connDst.Write(peep[0:n])
 					if err != nil {
-						fmt.Println(err)
-						break;
+						panic(err)
 					}
 					go func() {
+						defer func() {
+							connDst.Close()
+							fmt.Println("Server connection closed.")
+							connLocal.Close()
+							fmt.Println("Client connection closed.")
+							if err := recover(); err != nil {
+								fmt.Println(err)
+							}
+						}()
 						var buffer = make([]byte, 4096)
 						for {
 							runtime.Gosched()
 							n, err := connLocal.Read(buffer)
 							if err != nil {
-								fmt.Println(err)
-								break
+								panic(err)
 							}
 							if n > 0 {
 								_, err := connDst.Write(buffer[0:n])
 								if err != nil {
-									fmt.Println(err)
-									break
+									panic(err)
 								}
 							}
 						}
-						connDst.Close()
-						connLocal.Close()
 					}()
 
 					var buffer = make([]byte, 4096)
@@ -215,19 +235,15 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						runtime.Gosched()
 						n, err := connDst.Read(buffer)
 						if err != nil {
-							fmt.Println(err)
-							break
+							panic(err)
 						}
 						if n > 0 {
 							_, err := connLocal.Write(buffer[0:n])
 							if err != nil {
-								fmt.Println(err)
-								break
+								panic(err)
 							}
 						}
 					}
-					connDst.Close()
-					connLocal.Close()
 					break;
 				}
 			}
