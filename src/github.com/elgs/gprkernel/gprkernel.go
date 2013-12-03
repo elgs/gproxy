@@ -94,26 +94,21 @@ func Proxy(lConfig *Config, rConfig *Config) {
 				panic(err)
 			}
 			go func() {
-				defer func() {
-					connDst.Close()
-					fmt.Println("Server connection closed.")
-					connLocal.Close()
-					fmt.Println("Client connection closed.")
-					if err := recover(); err != nil {
-						fmt.Println(err)
-					}
-				}()
 				var buffer = make([]byte, 4096)
 				for {
 					runtime.Gosched()
 					n, err := connLocal.Read(buffer)
 					if err != nil {
-						panic(err)
+						connLocal.Close()
+						connDst.Close()
+						break;
 					}
 					if n > 0 {
 						_, err := connDst.Write(buffer[0:n])
 						if err != nil {
-							panic(err)
+							connLocal.Close()
+							connDst.Close()
+							break;
 						}
 					}
 				}
@@ -124,12 +119,16 @@ func Proxy(lConfig *Config, rConfig *Config) {
 				runtime.Gosched()
 				n, err := connDst.Read(buffer)
 				if err != nil {
-					panic(err)
+					connLocal.Close()
+					connDst.Close()
+					break;
 				}
 				if n > 0 {
 					_, err := connLocal.Write(buffer[0:n])
 					if err != nil {
-						panic(err)
+						connLocal.Close()
+						connDst.Close()
+						break;
 					}
 				}
 			}
@@ -205,26 +204,21 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						panic(err)
 					}
 					go func() {
-						defer func() {
-							connDst.Close()
-							fmt.Println("Server connection closed.")
-							connLocal.Close()
-							fmt.Println("Client connection closed.")
-							if err := recover(); err != nil {
-								fmt.Println(err)
-							}
-						}()
 						var buffer = make([]byte, 4096)
 						for {
 							runtime.Gosched()
 							n, err := connLocal.Read(buffer)
 							if err != nil {
-								panic(err)
+								connLocal.Close()
+								connDst.Close()
+								break;
 							}
 							if n > 0 {
 								_, err := connDst.Write(buffer[0:n])
 								if err != nil {
-									panic(err)
+									connLocal.Close()
+									connDst.Close()
+									break;
 								}
 							}
 						}
@@ -235,12 +229,16 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						runtime.Gosched()
 						n, err := connDst.Read(buffer)
 						if err != nil {
-							panic(err)
+							connLocal.Close()
+							connDst.Close()
+							break;
 						}
 						if n > 0 {
 							_, err := connLocal.Write(buffer[0:n])
 							if err != nil {
-								panic(err)
+								connLocal.Close()
+								connDst.Close()
+								break;
 							}
 						}
 					}
