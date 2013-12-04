@@ -17,6 +17,7 @@ func main() {
 		}
 	}()
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	fmt.Println("CPUs: ", runtime.NumCPU())
 	input := args()
 	for i := range input {
 		start(input[i])

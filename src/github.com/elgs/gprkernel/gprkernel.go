@@ -49,6 +49,27 @@ func Run(config *map[string] interface {}) {
 	}
 }
 
+func pipe(connLocal *net.Conn, connDst *net.Conn, bufSize int) {
+	var buffer = make([]byte, bufSize)
+	for {
+		runtime.Gosched()
+		n, err := (*connLocal).Read(buffer)
+		if err != nil {
+			(*connLocal).Close()
+			(*connDst).Close()
+			break;
+		}
+		if n > 0 {
+			_, err := (*connDst).Write(buffer[0:n])
+			if err != nil {
+				(*connLocal).Close()
+				(*connDst).Close()
+				break;
+			}
+		}
+	}
+}
+
 func Proxy(lConfig *Config, rConfig *Config) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -67,10 +88,6 @@ func Proxy(lConfig *Config, rConfig *Config) {
 	}
 
 	addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
-	tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
-	if err != nil {
-		panic(err)
-	}
 
 	for {
 		connLocal, err := listener.Accept()
@@ -80,7 +97,7 @@ func Proxy(lConfig *Config, rConfig *Config) {
 		}
 
 		go func() {
-			connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
+			connDst, err := net.Dial("tcp", addressDst)
 			defer func() {
 				connDst.Close()
 				fmt.Println("Server connection closed.")
@@ -93,45 +110,8 @@ func Proxy(lConfig *Config, rConfig *Config) {
 			if err != nil {
 				panic(err)
 			}
-			go func() {
-				var buffer = make([]byte, 4096)
-				for {
-					runtime.Gosched()
-					n, err := connLocal.Read(buffer)
-					if err != nil {
-						connLocal.Close()
-						connDst.Close()
-						break;
-					}
-					if n > 0 {
-						_, err := connDst.Write(buffer[0:n])
-						if err != nil {
-							connLocal.Close()
-							connDst.Close()
-							break;
-						}
-					}
-				}
-			}()
-
-			var buffer = make([]byte, 4096)
-			for {
-				runtime.Gosched()
-				n, err := connDst.Read(buffer)
-				if err != nil {
-					connLocal.Close()
-					connDst.Close()
-					break;
-				}
-				if n > 0 {
-					_, err := connLocal.Write(buffer[0:n])
-					if err != nil {
-						connLocal.Close()
-						connDst.Close()
-						break;
-					}
-				}
-			}
+			go pipe(&connLocal, &connDst, 4096)
+			pipe(&connDst, &connLocal, 4096)
 		}()
 	}
 }
@@ -184,11 +164,7 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						}
 					}
 					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
-					tcpAddrDst, err := net.ResolveTCPAddr("tcp4", addressDst)
-					if err != nil {
-						panic(err)
-					}
-					connDst, err := net.DialTCP("tcp", nil, tcpAddrDst)
+					connDst, err := net.Dial("tcp", addressDst)
 					defer func() {
 						connDst.Close()
 						fmt.Println("Server connection closed.")
@@ -203,45 +179,8 @@ func Router(lConfig *Config, routes *map[string]Config) {
 					if err != nil {
 						panic(err)
 					}
-					go func() {
-						var buffer = make([]byte, 4096)
-						for {
-							runtime.Gosched()
-							n, err := connLocal.Read(buffer)
-							if err != nil {
-								connLocal.Close()
-								connDst.Close()
-								break;
-							}
-							if n > 0 {
-								_, err := connDst.Write(buffer[0:n])
-								if err != nil {
-									connLocal.Close()
-									connDst.Close()
-									break;
-								}
-							}
-						}
-					}()
-
-					var buffer = make([]byte, 4096)
-					for {
-						runtime.Gosched()
-						n, err := connDst.Read(buffer)
-						if err != nil {
-							connLocal.Close()
-							connDst.Close()
-							break;
-						}
-						if n > 0 {
-							_, err := connLocal.Write(buffer[0:n])
-							if err != nil {
-								connLocal.Close()
-								connDst.Close()
-								break;
-							}
-						}
-					}
+					go pipe(&connLocal, &connDst, 4096)
+					pipe(&connDst, &connLocal, 4096)
 					break;
 				}
 			}
