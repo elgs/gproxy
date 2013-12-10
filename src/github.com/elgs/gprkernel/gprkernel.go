@@ -99,11 +99,11 @@ func Proxy(lConfig *Config, rConfig *Config) {
 		go func() {
 			connDst, err := net.Dial("tcp", addressDst)
 			defer func() {
-				connDst.Close()
-				fmt.Println("Server connection closed.")
-				connLocal.Close()
-				fmt.Println("Client connection closed.")
 				if err := recover(); err != nil {
+					connDst.Close()
+					fmt.Println("Server connection closed.")
+					connLocal.Close()
+					fmt.Println("Client connection closed.")
 					fmt.Println(err)
 				}
 			}()
@@ -140,9 +140,9 @@ func Router(lConfig *Config, routes *map[string]Config) {
 		}
 		go func() {
 			defer func() {
-				connLocal.Close()
-				fmt.Println("Client connection closed.")
 				if err := recover(); err != nil {
+					connLocal.Close()
+					fmt.Println("Client connection closed.")
 					fmt.Println(err)
 				}
 			}()
@@ -166,9 +166,9 @@ func Router(lConfig *Config, routes *map[string]Config) {
 					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
 					connDst, err := net.Dial("tcp", addressDst)
 					defer func() {
-						connDst.Close()
-						fmt.Println("Server connection closed.")
 						if err := recover(); err != nil {
+							connDst.Close()
+							fmt.Println("Server connection closed.")
 							fmt.Println(err)
 						}
 					}()

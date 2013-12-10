@@ -11,11 +11,6 @@ import (
 )
 
 func main() {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
-		}
-	}()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Println("CPUs: ", runtime.NumCPU())
 	input := args()
@@ -28,6 +23,11 @@ func main() {
 }
 
 func start(configFile string) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	configs, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		panic(fmt.Sprint(configFile, " not found"))
