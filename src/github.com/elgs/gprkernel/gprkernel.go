@@ -100,12 +100,12 @@ func Proxy(lConfig *Config, rConfig *Config) {
 			connDst, err := net.Dial("tcp", addressDst)
 			defer func() {
 				if err := recover(); err != nil {
-					connDst.Close()
-					fmt.Println("Server connection closed.")
-					connLocal.Close()
-					fmt.Println("Client connection closed.")
 					fmt.Println(err)
 				}
+				connDst.Close()
+				fmt.Println("Server connection closed.")
+				connLocal.Close()
+				fmt.Println("Client connection closed.")
 			}()
 			if err != nil {
 				panic(err)
@@ -141,10 +141,10 @@ func Router(lConfig *Config, routes *map[string]Config) {
 		go func() {
 			defer func() {
 				if err := recover(); err != nil {
-					connLocal.Close()
-					fmt.Println("Client connection closed.")
 					fmt.Println(err)
 				}
+				connLocal.Close()
+				fmt.Println("Client connection closed.")
 			}()
 			var peep = make([]byte, 4096)
 			n, err := connLocal.Read(peep)
@@ -167,10 +167,10 @@ func Router(lConfig *Config, routes *map[string]Config) {
 					connDst, err := net.Dial("tcp", addressDst)
 					defer func() {
 						if err := recover(); err != nil {
-							connDst.Close()
-							fmt.Println("Server connection closed.")
 							fmt.Println(err)
 						}
+						connDst.Close()
+						fmt.Println("Server connection closed.")
 					}()
 					if err != nil {
 						panic(err)
