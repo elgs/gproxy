@@ -98,17 +98,10 @@ func Proxy(lConfig *Config, rConfig *Config) {
 
 		go func() {
 			connDst, err := net.Dial("tcp", addressDst)
-			defer func() {
-				if err := recover(); err != nil {
-					fmt.Println(err)
-				}
-				connDst.Close()
-				fmt.Println("Server connection closed.")
+			if err != nil {
+				fmt.Println(err)
 				connLocal.Close()
 				fmt.Println("Client connection closed.")
-			}()
-			if err != nil {
-				panic(err)
 			}
 			go pipe(&connLocal, &connDst, 4096)
 			pipe(&connDst, &connLocal, 4096)
@@ -165,15 +158,10 @@ func Router(lConfig *Config, routes *map[string]Config) {
 					}
 					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
 					connDst, err := net.Dial("tcp", addressDst)
-					defer func() {
-						if err := recover(); err != nil {
-							fmt.Println(err)
-						}
-						connDst.Close()
-						fmt.Println("Server connection closed.")
-					}()
 					if err != nil {
-						panic(err)
+						fmt.Println(err)
+						connLocal.Close()
+						fmt.Println("Client connection closed.")
 					}
 					_, err = connDst.Write(peep[0:n])
 					if err != nil {
