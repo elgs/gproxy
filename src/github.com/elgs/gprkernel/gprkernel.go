@@ -102,6 +102,7 @@ func Proxy(lConfig *Config, rConfig *Config) {
 				fmt.Println(err)
 				connLocal.Close()
 				fmt.Println("Client connection closed.")
+				return
 			}
 			go pipe(&connLocal, &connDst, 4096)
 			pipe(&connDst, &connLocal, 4096)
@@ -162,6 +163,7 @@ func Router(lConfig *Config, routes *map[string]Config) {
 						fmt.Println(err)
 						connLocal.Close()
 						fmt.Println("Client connection closed.")
+						return
 					}
 					_, err = connDst.Write(peep[0:n])
 					if err != nil {

@@ -26,5 +26,10 @@
     "dstPort" : 80,
     "localPort" : 3000,
     "dstAddr" : "www.microsoft.com"
-  }
+  },
+  "bad_host" : {
+      "dstPort" : 80,
+      "localPort" : 5000,
+      "dstAddr" : "thisismybadhost.com"
+   }
 }
