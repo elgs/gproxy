@@ -11,6 +11,10 @@ Supported Platforms
 * Linux 32/64/ARM
 * OS X
 
+Installation
+------
+`go get github.com/elgs/gproxy/gpr`
+
 Startup (as command line utility)
 ------
 * Start the proxy server with default configuration `gpr.json`:
