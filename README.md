@@ -54,7 +54,7 @@ func main() {
 		"localPort": 8000,
 		"routes": {
 			"hosta": {
-				"dstAddr": "127.0.0.1",
+				"dstAddr": "[::]",
 				"dstPort": 10309
 			},
 			"default": {
@@ -98,7 +98,7 @@ A configuration `gpr.json` looks like this:
   "google" : {
     "dstPort" : 80,
     "localPort" : 2000,
-    "localAddr" : "127.0.0.1",
+    "localAddr" : "[::]",
     "dstAddr" : "www.google.com"
   }
 }
@@ -125,9 +125,10 @@ A configuration `gpr.json` looks like this:
         "dstAddr" : "www.google.com",
         "dstPort" : 80
       },
-      "default" : {
-        "dstAddr" : "www.yahoo.com",
-        "dstPort" : 80
+      "ipv6" : {
+        "dstPort" : 22,
+        "localPort" : 4001,
+        "dstAddr" : "[2607:1260:1234::1:0]"
       }
     }
   }
