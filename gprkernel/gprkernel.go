@@ -12,20 +12,20 @@ type Config struct {
 	port float64
 }
 
-func Run(config *map[string] interface {}) {
+func Run(config *map[string]interface{}) {
 	lConfig := Config{}
 	if v, ok := (*config)["localAddr"].(string); ok {
 		lConfig.host = v
 	} else {
-		lConfig.host = "0.0.0.0"
+		lConfig.host = "[::]"
 	}
 	if v, ok := (*config)["localPort"].(float64); ok {
 		lConfig.port = v
 	}
-	if v, ok := (*config)["routes"].(map[string]interface {}); ok {
+	if v, ok := (*config)["routes"].(map[string]interface{}); ok {
 		routes := map[string]Config{}
 		for host, route := range v {
-			if route, ok := route.(map[string]interface {}); ok {
+			if route, ok := route.(map[string]interface{}); ok {
 				rConfig := Config{}
 				if v, ok := route["dstAddr"].(string); ok {
 					rConfig.host = v
@@ -57,14 +57,14 @@ func pipe(connLocal *net.Conn, connDst *net.Conn, bufSize int) {
 		if err != nil {
 			(*connLocal).Close()
 			(*connDst).Close()
-			break;
+			break
 		}
 		if n > 0 {
 			_, err := (*connDst).Write(buffer[0:n])
 			if err != nil {
 				(*connLocal).Close()
 				(*connDst).Close()
-				break;
+				break
 			}
 		}
 	}
@@ -76,8 +76,8 @@ func Proxy(lConfig *Config, rConfig *Config) {
 			fmt.Println(err)
 		}
 	}()
-	addressLocal := fmt.Sprint(lConfig.host , ":" , lConfig.port)
-	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
+	addressLocal := fmt.Sprint(lConfig.host, ":", lConfig.port)
+	tcpAddrLocal, err := net.ResolveTCPAddr("tcp", addressLocal)
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +87,7 @@ func Proxy(lConfig *Config, rConfig *Config) {
 		panic(err)
 	}
 
-	addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
+	addressDst := fmt.Sprint(rConfig.host, ":", rConfig.port)
 
 	for {
 		connLocal, err := listener.Accept()
@@ -116,8 +116,8 @@ func Router(lConfig *Config, routes *map[string]Config) {
 			fmt.Println(err)
 		}
 	}()
-	addressLocal := fmt.Sprint(lConfig.host , ":" , lConfig.port)
-	tcpAddrLocal, err := net.ResolveTCPAddr("tcp4", addressLocal)
+	addressLocal := fmt.Sprint(lConfig.host, ":", lConfig.port)
+	tcpAddrLocal, err := net.ResolveTCPAddr("tcp", addressLocal)
 	if err != nil {
 		panic(err)
 	}
@@ -157,7 +157,7 @@ func Router(lConfig *Config, routes *map[string]Config) {
 							panic("No route found.")
 						}
 					}
-					addressDst := fmt.Sprint(rConfig.host , ":" , rConfig.port)
+					addressDst := fmt.Sprint(rConfig.host, ":", rConfig.port)
 					connDst, err := net.Dial("tcp", addressDst)
 					if err != nil {
 						fmt.Println(err)
@@ -171,7 +171,7 @@ func Router(lConfig *Config, routes *map[string]Config) {
 					}
 					go pipe(&connLocal, &connDst, 4096)
 					pipe(&connDst, &connLocal, 4096)
-					break;
+					break
 				}
 			}
 		}()

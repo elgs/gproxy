@@ -16,20 +16,20 @@
       }
     }
   },
-  "google" : {
-    "dstPort" : 80,
+  "ipv6_1" : {
+    "dstPort" : 22,
     "localPort" : 2000,
-    "localAddr" : "127.0.0.1",
-    "dstAddr" : "www.google.com"
-  },
-  "microsoft" : {
-    "dstPort" : 80,
-    "localPort" : 3000,
-    "dstAddr" : "www.microsoft.com"
+    "localAddr" : "[::]",
+    "dstAddr" : "ipv6.example.com"
   },
   "bad_host" : {
       "dstPort" : 80,
       "localPort" : 5000,
       "dstAddr" : "thisismybadhost.com"
+   },
+	"ipv6_2" : {
+      "dstPort" : 22,
+      "localPort" : 4001,
+      "dstAddr" : "[2607:1260:1234::1:0]"
    }
 }
