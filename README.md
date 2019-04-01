@@ -110,7 +110,7 @@ Please note that `localAddr` is not necessary, when omitted, the server will lis
 
 Router mode
 ------
-Router mode works only with HTTP, not even HTTPS. Proxy mode and router mode can be working together happily.
+Router mode works only with HTTP, and will not work with HTTPS. Proxy mode and router mode can be working together happily.
 A configuration `gpr.json` looks like this:
 ```js
 {
